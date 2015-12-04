@@ -16,6 +16,7 @@
 #########################################################################
 
 require 5.005;
+use utf8;
 
 BEGIN {
 	# ONLY STUFF THAT MUST RUN BEFORE INITIALIZATION GOES HERE!
@@ -114,7 +115,8 @@ BEGIN {
 		tokenkey tokensecret credurl keyf readlinerepaint
 		simplestart exception_is_maskable oldperl notco
 		notify_tool_path oauthurl oauthauthurl oauthaccurl oauthbase
-		signals_use_posix dostream eventbuf streamallreplies
+		signals_use_posix dostream eventbuf replacement_newline
+		replacement_carriagereturn streamallreplies
 	); %valid = (%opts_can_set, %opts_others);
 	$rc = (defined($rc) && length($rc)) ? $rc : "";
 	unless ($norc) {
@@ -156,6 +158,8 @@ BEGIN {
 	$supreturnto = $verbose + 0;
 	$postbreak_time = 0;
 	$postbreak_count = 0;
+	$replacement_newline ||= $seven ? ' [NL] ' : ' ␤ ';
+	$replacement_carriagereturn ||= $seven ? ' [CR] ' : ' ␍ ';
 
 	# our minimum official support is now 5.8.6.
 	if ($] < 5.008006 && !$oldperl) {
@@ -7638,8 +7642,8 @@ s/\\u([dD][890abAB][0-9a-fA-F]{2})\\u([dD][cdefCDEF][0-9a-fA-F]{2})/&deutf16($1,
 		$x =~ s/\&amp;/\&/g;
 	}
 	if ($newline) {
-		$x =~ s/\\n/\n/sg;
-		$x =~ s/\\r//sg;
+		$x =~ s/\\n/$replacement_newline/sg;
+		$x =~ s/\\r/$replacement_carriagereturn/sg;
 	}
 	return $x;
 }
