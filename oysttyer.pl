@@ -16,6 +16,7 @@
 #########################################################################
 
 require 5.005;
+use JSON;
 
 BEGIN {
 	# ONLY STUFF THAT MUST RUN BEFORE INITIALIZATION GOES HERE!
@@ -7336,6 +7337,8 @@ sub parsejson {
 	my $ddqqmask;
 	my $ssqqmask;
 
+	my $orig_data = $data;
+
 	# test for single logicals
 	return {
 		'ok' => 1,
@@ -7450,6 +7453,28 @@ $tdata
 $@
 --- JSON PARSING FAILED --
 EOF
+	}
+
+	if (ref($my_json_ref) eq 'ARRAY') {
+		if (ref $my_json_ref->[0] eq 'HASH' && $my_json_ref->[0]->{'id'}) {
+			# is a collection of tweets, decode using JSON library too
+			my $json = JSON->new();
+			my $decoded = $json->decode($orig_data);
+			for (my $i = 0; $i < scalar(@{$my_json_ref}); $i++) {
+				# add JSON library decoded version to each tweet
+				$my_json_ref->[$i]->{'__json_decoded'} = $decoded->[$i];
+			}
+		}
+	}
+	elsif (ref($my_json_ref) eq 'HASH' && $my_json_ref->{'id'}) {
+		my $json = JSON->new();
+		my $decoded = $json->decode($orig_data);
+		$my_json_ref->{'__json_decoded'} = $decoded;
+	}
+	elsif (ref($my_json_ref) eq 'HASH' && $my_json_ref->{'payload'}->{'id'}) {
+		my $json = JSON->new();
+		my $decoded = $json->decode($orig_data);
+		$my_json_ref->{'payload'}->{'__json_decoded'} = $decoded->{'payload'};
 	}
 
 	return $my_json_ref;
